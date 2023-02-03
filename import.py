@@ -26,7 +26,7 @@ def lead_exists(leads, company_name):
     for lead in leads:
         if lead.get('name') == company_name:
             return True
-    return False	
+    return False
 
 def create_or_update_lead(row, leads):
 	# Importing unique Leads
@@ -69,10 +69,14 @@ def update_company(lead, company_founded, company_revenue, company_us_state):
 		print(lead)
 		if lead["custom.cf_QunpCuMvHJxiV5QjYrusGG9D8Uzi08CsS5jGTbxHfm4"] == "" and row["custom.Company Founded"] != "":
 			update_custom_field(lead, lead_id,'company founded', row["custom.Company Founded"])
+			lead.update({"custom.cf_QunpCuMvHJxiV5QjYrusGG9D8Uzi08CsS5jGTbxHfm4": row["custom.Company Founded"]})
 		if lead["custom.cf_CVsgcfWqI7sz5KjvSckz34AtB6lEoKnctkA5C610TZb"] == "" and row["custom.Company Revenue"] != "":
 			update_custom_field(lead, lead_id,'company revenue', row["custom.Company Revenue"] )
+			lead.update({"custom.cf_CVsgcfWqI7sz5KjvSckz34AtB6lEoKnctkA5C610TZb": row["custom.Company Revenue"]})
 		if lead["custom.cf_lS1kT2uuH2KChn2UjzK0NRLhceKWudOWzhySB53GR5w"] == "" and row["Company US State"] != "":
 			update_custom_field(lead, lead_id,'company us state',row["Company US State"])
+			lead.update({"custom.cf_lS1kT2uuH2KChn2UjzK0NRLhceKWudOWzhySB53GR5w": row["Company US State"]})
+
 
 def update_custom_field(lead, lead_id,field, field_val):
   if field == 'company founded':
@@ -157,5 +161,39 @@ with open(source_file, 'r') as csvfile:
 				print(f"{contact}: Contact could not be posted because {str(e)}")
 
 print(f"Leads imported: {lead_count} and Contacts imported: {contact_count}")
+# print(leads)
 
+### Generating CVS with report
+import statistics
 
+# Group the Leads by US State
+state_data = {}
+for lead in leads:
+    state = lead['custom.cf_lS1kT2uuH2KChn2UjzK0NRLhceKWudOWzhySB53GR5w']
+    if state not in state_data:
+        state_data[state] = {
+            'companies': [],
+            'revenues': []
+        }
+	
+    if lead_exists(leads, lead['name']):
+        state_data[state]['companies'].append(lead['name'])
+        try:
+            state_data[state]['revenues'].append(float(lead['custom.cf_CVsgcfWqI7sz5KjvSckz34AtB6lEoKnctkA5C610TZb'][1:].replace(',', '')))
+        except Exception as e:
+            print(f"{lead}: Revenue could not be converted to float because {str(e)}")
+	    
+# Write the output CSV data
+with open('State Revenue Report.csv', 'w', newline='') as output_file:
+    fieldnames = ['Company US State', 'Total Companies', 'Total Revenue', 'Median Revenue']
+    writer = csv.DictWriter(output_file, fieldnames=fieldnames)
+    writer.writeheader()
+    for state, data in state_data.items():
+        writer.writerow({
+            'Company US State': state,
+            'Total Companies': len(data['companies']),
+            'Total Revenue': sum(data['revenues']),
+            'Median Revenue': statistics.median(data['revenues'])
+        })
+	
+print("Job Done!!")
