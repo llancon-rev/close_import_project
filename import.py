@@ -79,22 +79,22 @@ def update_company(lead, company_founded, company_revenue, company_us_state):
 
 
 def update_custom_field(lead, lead_id,field, field_val):
-  if field == 'company founded':
-    custom_field_k, custom_field_v  = "custom.cf_QunpCuMvHJxiV5QjYrusGG9D8Uzi08CsS5jGTbxHfm4", field_val
-  if field == 'company revenue':
-    custom_field_k, custom_field_v  = "custom.cf_CVsgcfWqI7sz5KjvSckz34AtB6lEoKnctkA5C610TZb", field_val
-  if field == 'company us state':
-    custom_field_k, custom_field_v = "cf_lS1kT2uuH2KChn2UjzK0NRLhceKWudOWzhySB53GR5w", field_val
-  else:
-    "no updates"
-  updated_lead = {
+    if field == 'company founded':
+        custom_field_k, custom_field_v  = "custom.cf_QunpCuMvHJxiV5QjYrusGG9D8Uzi08CsS5jGTbxHfm4", field_val
+    if field == 'company revenue':
+        custom_field_k, custom_field_v  = "custom.cf_CVsgcfWqI7sz5KjvSckz34AtB6lEoKnctkA5C610TZb", field_val
+    if field == 'company us state':
+        custom_field_k, custom_field_v = "cf_lS1kT2uuH2KChn2UjzK0NRLhceKWudOWzhySB53GR5w", field_val
+    else:
+        "no updates"
+    updated_lead = {
 	custom_field_k : custom_field_v
 	}
-  try:
-    updated_lead = api.put(f'lead/{lead_id}', data=updated_lead)
-    # print(f"Successfully updated Lead: {updated_lead}")
-  except Exception as e:
-    print(f"{updated_lead}: Lead could not be posted because {str(e)}")
+    try:
+        updated_lead = api.put(f'lead/{lead_id}', data=updated_lead)
+        # print(f"Successfully updated Lead: {updated_lead}")
+    except Exception as e:
+        print(f"{updated_lead}: Lead could not be posted because {str(e)}")
 
 # Set API Key
 api_key = os.getenv("CLOSE_API_KEY")
