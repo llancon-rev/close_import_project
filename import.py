@@ -14,8 +14,7 @@ import phonenumbers
 lead_count = 0
 contact_count = 0
 
-## Defining helper methods ##
-
+### Defining helper methods ###
 def find_lead_id(lead):
 	for lead in leads:
 		if row["Company"] == lead["name"]:
@@ -59,12 +58,12 @@ def create_or_update_lead(row, leads):
 			update_company(lead,row["custom.Company Founded"], row["custom.Company Revenue"], row["Company US State"])
 			
 def update_company(lead, company_founded, company_revenue, company_us_state):
+	# As the API rejects data that is empty these method will update a company or lead specific custom fields.
 	if company_founded == company_revenue == company_us_state == "":
 		return
 	else:
 		lead_id = find_lead_id(lead)
 		# Update the Company Founded if it's not empty in the current row
-		print(lead)
 		if lead["custom.cf_QunpCuMvHJxiV5QjYrusGG9D8Uzi08CsS5jGTbxHfm4"] == "" and row["custom.Company Founded"] != "":
 			update_custom_field(lead, lead_id,'company founded', row["custom.Company Founded"])
 			lead.update({"custom.cf_QunpCuMvHJxiV5QjYrusGG9D8Uzi08CsS5jGTbxHfm4": row["custom.Company Founded"]})
@@ -76,6 +75,7 @@ def update_company(lead, company_founded, company_revenue, company_us_state):
 			lead.update({"custom.cf_lS1kT2uuH2KChn2UjzK0NRLhceKWudOWzhySB53GR5w": row["Company US State"]})
 
 def update_custom_field(lead, lead_id,field, field_val):
+    # Updates specific custom field that was found missing.
     if field == 'company founded':
         custom_field_k, custom_field_v  = "custom.cf_QunpCuMvHJxiV5QjYrusGG9D8Uzi08CsS5jGTbxHfm4", field_val
     if field == 'company revenue':
