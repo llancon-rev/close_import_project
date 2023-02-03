@@ -10,6 +10,90 @@ load_dotenv('vault.env')
 import validate_email
 import phonenumbers
 
+lead_count = 0
+contact_count = 0
+
+
+## Defining helper methods ##
+
+def find_lead_id(lead):
+	for lead in leads:
+		if row["Company"] == lead["name"]:
+			lead_id = lead["lead_id"]
+			return lead_id
+
+def lead_exists(leads, company_name):
+    for lead in leads:
+        if lead.get('name') == company_name:
+            return True
+    return False	
+
+def create_or_update_lead(row, leads):
+	# Importing unique Leads
+	if not lead_exists(leads, row['Company']):
+		lead = {
+				"name": row["Company"]
+				}
+		try:
+			post_lead = api.post('lead', data=lead)
+			new_lead = {
+				"name": row["Company"],
+				"lead_id": post_lead["id"],
+				"custom.cf_QunpCuMvHJxiV5QjYrusGG9D8Uzi08CsS5jGTbxHfm4": "",
+				"custom.cf_CVsgcfWqI7sz5KjvSckz34AtB6lEoKnctkA5C610TZb": "",
+				"custom.cf_lS1kT2uuH2KChn2UjzK0NRLhceKWudOWzhySB53GR5w": ""
+				}
+			leads.append(new_lead)
+			global lead_count
+			lead_count += 1
+		# print(post_lead)
+		except Exception as e:
+			print(f"{lead['name']}: Lead could not be posted because {str(e)}")
+		# To ensure custom fields are import if there on the first try
+		
+	# Lead exists but does it have all the custom fields?
+	for lead in leads:
+		if lead.get(row["Company"]) == row["Company"] and (lead.get(row["custom.Company Founded"]) != "" or lead.get(row["custom.Company Revenue"]) != "" or lead.get(row["Company US State"]) != "") :
+			# If all custom fields exist for lead then return the current lead object.
+			return
+		else:
+			update_company(lead,row["custom.Company Founded"], row["custom.Company Revenue"], row["Company US State"])
+
+			
+def update_company(lead, company_founded, company_revenue, company_us_state):
+	if company_founded == company_revenue == company_us_state == "":
+		return
+	else:
+		lead_id = find_lead_id(lead)
+		# Update the Company Founded if it's not empty in the current row
+		print(lead)
+		if lead["custom.cf_QunpCuMvHJxiV5QjYrusGG9D8Uzi08CsS5jGTbxHfm4"] == "" and row["custom.Company Founded"] != "":
+			update_custom_field(lead, lead_id,'company founded', row["custom.Company Founded"])
+		if lead["custom.cf_CVsgcfWqI7sz5KjvSckz34AtB6lEoKnctkA5C610TZb"] == "" and row["custom.Company Revenue"] != "":
+			update_custom_field(lead, lead_id,'company revenue', row["custom.Company Revenue"] )
+		if lead["custom.cf_lS1kT2uuH2KChn2UjzK0NRLhceKWudOWzhySB53GR5w"] == "" and row["Company US State"] != "":
+			update_custom_field(lead, lead_id,'company us state',row["Company US State"])
+
+def update_custom_field(lead, lead_id,field, field_val):
+  if field == 'company founded':
+    custom_field_k, custom_field_v  = "custom.cf_QunpCuMvHJxiV5QjYrusGG9D8Uzi08CsS5jGTbxHfm4", field_val
+  if field == 'company revenue':
+    custom_field_k, custom_field_v  = "custom.cf_CVsgcfWqI7sz5KjvSckz34AtB6lEoKnctkA5C610TZb", field_val
+  if field == 'company us state':
+    custom_field_k, custom_field_v = "cf_lS1kT2uuH2KChn2UjzK0NRLhceKWudOWzhySB53GR5w", field_val
+  else:
+    "no updates"
+  updated_lead = {
+				custom_field_k : custom_field_v
+	}
+  try:
+    updated_lead = api.put(f'lead/{lead_id}', data=updated_lead)
+    # print(f"Successfully updated Lead: {updated_lead}")
+  except Exception as e:
+    print(f"{updated_lead}: Lead could not be posted because {str(e)}")
+
+
+
 # Set API Key
 api_key = os.getenv("CLOSE_API_KEY")
 api = Client(api_key)
@@ -28,7 +112,7 @@ with open(source_file, 'r') as csvfile:
 	for row in csvreader:
 		#  Email still not validated
 		email = row["Contact Emails"]
-
+		# print(row)
 		try:
 			parsed_number = phonenumbers.parse(row["Contact Phones"], None)
 		except Exception:
@@ -37,42 +121,17 @@ with open(source_file, 'r') as csvfile:
 
 		# Email and phone data is valid the row is saved
 		if validate_email.validate_email(email) and phonenumbers.is_valid_number(parsed_number):
-			# Empty Company Found case
-			if row["custom.Company Founded"] in ['']:
-				row["custom.Company Founded"] = "01.01.2023"
-			# Empty Company Revenue case
-			if row["custom.Company Revenue"] in ['']:
-				row["custom.Company Revenue"] = "$0.00"
-			if row["Company US State"] == "":
-				row["Company US State"] = "None"
+		
+##### importing Leads #########	
+			create_or_update_lead(row, leads)
 
-			# Importing unique Leads
-			if row["Company"] not in leads:
-				lead = {
-					"name": row["Company"],
-					"custom.cf_QunpCuMvHJxiV5QjYrusGG9D8Uzi08CsS5jGTbxHfm4": row["custom.Company Founded"],
-					"custom.cf_CVsgcfWqI7sz5KjvSckz34AtB6lEoKnctkA5C610TZb": row["custom.Company Revenue"],
-					"custom.cf_lS1kT2uuH2KChn2UjzK0NRLhceKWudOWzhySB53GR5w": row["Company US State"]
-				}
-				# {"Company Founded": "cf_QunpCuMvHJxiV5QjYrusGG9D8Uzi08CsS5jGTbxHfm4"}
-				# {"Company Revenue": "cf_CVsgcfWqI7sz5KjvSckz34AtB6lEoKnctkA5C610TZb"}
-				# {"Company US State" "cf_lS1kT2uuH2KChn2UjzK0NRLhceKWudOWzhySB53GR5w"}
-				try:
-					post_lead = api.post('lead', data=lead)
-					new_lead = {
-						"name": row["Company"],
-						"lead_id": post_lead["id"]
-					}
-					leads.append(new_lead)
-					# print(post_lead)
-				except Exception as e:
-					print(f"{lead['id']}: Lead could not be posted because {str(e)}")
-					continue
+##### importing Contacts #########
 
-			# Finding lead_id  for Contact that will be imported next
+			# # Finding lead_id for Contact that will be imported next
 			for lead in leads:
 				if row["Company"] == lead["name"]:
 					lead_id = lead["lead_id"]
+
 			# Handle contact name empty cases
 			if row["Contact Name"] in ['', None]:
 					if row["Contact Emails"] not in ['', None]:
@@ -89,24 +148,14 @@ with open(source_file, 'r') as csvfile:
 				"phones":[
 					{"phones": row["Contact Phones"], "type":"office"}
 				]
-				# "custom.Company Found": row["custom.Company Founded"],
-				# "custom.Company Revenue": row["custom.Company Revenue"],
-				# "Company US State": row["Company US State"]
 			}
 			try:
 				post_contact = api.post('contact', data=contact)
 				contacts.append(contact)
-
+				contact_count += 1
 			except Exception as e:
 				print(f"{contact}: Contact could not be posted because {str(e)}")
 
-# print(leads)
+print(f"Leads imported: {lead_count} and Contacts imported: {contact_count}")
 
-print(contacts)
 
-# params = { PARAMS HERE }
-
-# resp = api.get('custom_field/lead')
-# print(resp)
-
-		
