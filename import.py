@@ -49,8 +49,7 @@ def create_or_update_lead(row, leads):
 		# print(post_lead)
 		except Exception as e:
 			print(f"{lead['name']}: Lead could not be posted because {str(e)}")
-		# To ensure custom fields are import if there on the first try
-		
+		# To ensure custom fields are import if there on the first try		
 	# Lead exists but does it have all the custom fields?
 	for lead in leads:
 		if lead.get(row["Company"]) == row["Company"] and (lead.get(row["custom.Company Founded"]) != "" or lead.get(row["custom.Company Revenue"]) != "" or lead.get(row["Company US State"]) != "") :
@@ -58,7 +57,6 @@ def create_or_update_lead(row, leads):
 			return
 		else:
 			update_company(lead,row["custom.Company Founded"], row["custom.Company Revenue"], row["Company US State"])
-
 			
 def update_company(lead, company_founded, company_revenue, company_us_state):
 	if company_founded == company_revenue == company_us_state == "":
@@ -76,7 +74,6 @@ def update_company(lead, company_founded, company_revenue, company_us_state):
 		if lead["custom.cf_lS1kT2uuH2KChn2UjzK0NRLhceKWudOWzhySB53GR5w"] == "" and row["Company US State"] != "":
 			update_custom_field(lead, lead_id,'company us state',row["Company US State"])
 			lead.update({"custom.cf_lS1kT2uuH2KChn2UjzK0NRLhceKWudOWzhySB53GR5w": row["Company US State"]})
-
 
 def update_custom_field(lead, lead_id,field, field_val):
     if field == 'company founded':
@@ -96,6 +93,7 @@ def update_custom_field(lead, lead_id,field, field_val):
     except Exception as e:
         print(f"{updated_lead}: Lead could not be posted because {str(e)}")
 
+#### Start to process source CSV file ####
 # Set API Key
 api_key = os.getenv("CLOSE_API_KEY")
 api = Client(api_key)
@@ -103,7 +101,7 @@ api = Client(api_key)
 # Source CSV file name
 source_file = "Close Sample Import File.csv"
 
-# reading csv file
+# Reading csv file
 with open(source_file, 'r') as csvfile:
 
 	# creating a csv reader object
@@ -156,10 +154,8 @@ with open(source_file, 'r') as csvfile:
 				print(f"{contact}: Contact could not be posted because: {str(e)}")
 
 print(f"Leads imported: {lead_count} and Contacts imported: {contact_count}")
-# print(leads)
 
 ### Generating CVS with State Revenue report
-
 # Group the Leads by US State
 state_data = {}
 for lead in leads:
