@@ -1,4 +1,5 @@
 import csv
+import statistics
 from closeio_api import Client
 
 # Load environment variables
@@ -12,7 +13,6 @@ import phonenumbers
 
 lead_count = 0
 contact_count = 0
-
 
 ## Defining helper methods ##
 
@@ -88,15 +88,13 @@ def update_custom_field(lead, lead_id,field, field_val):
   else:
     "no updates"
   updated_lead = {
-				custom_field_k : custom_field_v
+	custom_field_k : custom_field_v
 	}
   try:
     updated_lead = api.put(f'lead/{lead_id}', data=updated_lead)
     # print(f"Successfully updated Lead: {updated_lead}")
   except Exception as e:
     print(f"{updated_lead}: Lead could not be posted because {str(e)}")
-
-
 
 # Set API Key
 api_key = os.getenv("CLOSE_API_KEY")
@@ -112,26 +110,23 @@ with open(source_file, 'r') as csvfile:
 	csvreader = csv.DictReader(csvfile)
 	leads = []
 	contacts=[]
-	# extracting each data row one by one
+	# Processing each data row
 	for row in csvreader:
-		#  Email still not validated
-		email = row["Contact Emails"]
-		# print(row)
 		try:
 			parsed_number = phonenumbers.parse(row["Contact Phones"], None)
-		except Exception:
+		except Exception as e:
+			print(f"Could not parse phone number because: {str(e)}")
 			# If the phone number can't be parsed it moves on to next row
 			continue
 
 		# Email and phone data is valid the row is saved
-		if validate_email.validate_email(email) and phonenumbers.is_valid_number(parsed_number):
+		if validate_email.validate_email(row["Contact Emails"]) and phonenumbers.is_valid_number(parsed_number):
 		
 ##### importing Leads #########	
 			create_or_update_lead(row, leads)
 
 ##### importing Contacts #########
-
-			# # Finding lead_id for Contact that will be imported next
+			## Finding lead_id for Contact that will be imported next
 			for lead in leads:
 				if row["Company"] == lead["name"]:
 					lead_id = lead["lead_id"]
@@ -158,13 +153,12 @@ with open(source_file, 'r') as csvfile:
 				contacts.append(contact)
 				contact_count += 1
 			except Exception as e:
-				print(f"{contact}: Contact could not be posted because {str(e)}")
+				print(f"{contact}: Contact could not be posted because: {str(e)}")
 
 print(f"Leads imported: {lead_count} and Contacts imported: {contact_count}")
 # print(leads)
 
-### Generating CVS with report
-import statistics
+### Generating CVS with State Revenue report
 
 # Group the Leads by US State
 state_data = {}
