@@ -1,5 +1,6 @@
 import csv
 import statistics
+import pdb
 from closeio_api import Client
 
 # Load environment variables
@@ -113,7 +114,7 @@ with open(source_file, 'r') as csvfile:
 		try:
 			parsed_number = phonenumbers.parse(row["Contact Phones"], None)
 		except Exception as e:
-			print(f"Could not parse phone number because: {str(e)}")
+			print(f"Could not parse phone number because: {str(e)} " + row["Contact Phones"])
 			# If the phone number can't be parsed it moves on to next row
 			continue
 
@@ -175,15 +176,19 @@ for lead in leads:
 	    
 # Write the output CSV data
 with open('State Revenue Report.csv', 'w', newline='') as output_file:
-    fieldnames = ['Company US State', 'Total Companies', 'Total Revenue', 'Median Revenue']
+    fieldnames = ['Company US State', 'Total Companies', 'Total Revenue', 'Median Revenue', 'Company with Most Revenue']
     writer = csv.DictWriter(output_file, fieldnames=fieldnames)
     writer.writeheader()
     for state, data in state_data.items():
+        max_revenue = max(data['revenues'])
+        max_index = data['revenues'].index(max_revenue)
+        max_company = data['companies'][max_index]
         writer.writerow({
             'Company US State': state,
             'Total Companies': len(data['companies']),
             'Total Revenue': sum(data['revenues']),
-            'Median Revenue': statistics.median(data['revenues'])
+            'Median Revenue': statistics.median(data['revenues']),
+	    	'Company with Most Revenue': max_company
         })
-	
+
 print("Job Done!!")
