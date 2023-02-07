@@ -1,19 +1,34 @@
-# close_import_project
-
+# A Script for Close API to import from CSV file written in Python 
 Python Version: 3.8.5
-Dependencies needed: 
-```closeio_api
-argparse
-datetime
-statistics
+
+## Set up:
+1. It assumes the source CSV file is called "Close Sample Import File.csv"
+2. Store the API Key in a file called ".vault" and place API Key in this format:
+```
+CLOSE_API_KEY=API key goes here
 ```
 
-# How run the script:
-```python
+## Dependencies needed: 
+```
+closeio_api , Module version: 2.0
+argparse, Module version: 1.1
+datetime 
+statistics
+dotenv
+validate_email
+phonenumbers, Module version: 8.13.5
+
+```
+
+## Running the script:
+
+Example:
+
+```bash
 python import.py --start_date 01.01.1950 --end_date 31.01.2023
 
 ```
-
+# How this script works:
 The script has 3 main components: a import, lead and contact component. The main part is the import file that contains the logic to import data from the source CSV file and also generate a US State revenue report in a CSV.
 
 The lead and contact components contain the logic to eliminate invalid data. Each lead becomes invalid when it contains an associated contact that has bad contact data. For example an invalid phone number or email would invalidate a Lead even if it as other Contacts with good data. This follows the same pattern that was observed when testing Closes CSV import feature.
