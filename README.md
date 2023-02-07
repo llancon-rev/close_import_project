@@ -35,7 +35,7 @@ The lead and contact components contain the logic to eliminate invalid data. Eac
 
 Once leads are verified to have good data the next stage is to ensure leads that have errors are removed from the import process. This is handled by tracking leads in a seperate 'errors' list. If the lead is in the 'errors' list, it will not be imported.
 
-Once the leads are completely cleaned, only leads that have valid contact data, then the leads grouped with assoicated contacts are imported to Close via a POST request to the Close API. 
+After the leads are completely cleaned, only leads that have valid contact data, then the leads grouped with assoicated contacts are imported to Close via a POST request to the Close API. 
 
 The final stage is to create a US State revenue report. This is done by grouping the leads by state via the group_leads_by_state() function. This function returns a dictionary of the states grouped with the company revenue data that will be used to generate the output CSV file. Finally, once the lead State data is grouped together, the script enters the final step, which iterates over the state data dictionary and writes the end result calculations to the output CSV. 
 
