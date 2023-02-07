@@ -2,13 +2,14 @@
 
 Python Version: 3.8.5
 Dependencies needed: 
-**closeio_api
+```closeio_api
 argparse
 datetime
-statistics**
+statistics
+```
 
-```python
 # How run the script:
+```python
 python import.py --start_date 01.01.1950 --end_date 31.01.2023
 
 ```
