@@ -13,8 +13,8 @@ CLOSE_API_KEY=API key goes here
 closeio_api 2.0
 argparse 1.1
 datetime 
-statistics
-dotenv
+statistics 1.0.3.5
+dotenv 0.21.1
 validate_email 1.3
 phonenumbers 8.13.5
 
