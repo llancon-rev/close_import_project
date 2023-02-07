@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 import os
 load_dotenv('vault.env')
 
-### Setting up date range args to import data within specified range. ### 
+### Setting up date range args to import data within specified range. Date Range is required to run the script. ### 
 parser = argparse.ArgumentParser()
 # Example of specifying date range when running script: python import.py --start_date 01.01.1950 --end_date 31.01.2023
 parser.add_argument("--start_date", help="start date in format DD.MM.YYYY", required=True)
@@ -35,7 +35,7 @@ with open(source_file, 'r') as csvfile:
     errors = []
 
     for row in csvreader:
-        # First check if Company founded date falls within date range that was specified and skip CSV row if its out of range.
+        # First check if Company founded date falls within date range that was specified and skip CSV row if its out of range or blank.
         if row["custom.Company Founded"] in [None, ''] or (datetime.strptime(row["custom.Company Founded"], "%d.%m.%Y") < start_date or datetime.strptime(row["custom.Company Founded"], "%d.%m.%Y") > end_date):
             # print(f"{row['Company']} and founded on {row['custom.Company Founded']}")
             continue
@@ -75,7 +75,7 @@ for lead in leads:
     except Exception as e:
         print(f"{lead}: Lead could not be posted because {str(e)}")
 
-### Generating CVS with State Revenue report ### 
+### Generating CSV with State Revenue report ### 
 # Group the Leads by US State
 state_data = Lead.group_leads_by_state(leads)
 

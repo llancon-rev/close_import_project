@@ -1,5 +1,3 @@
-from closeio_api import Client
-
 class Lead:
     def __init__(self, name, custom_fields):
         self.name = name
