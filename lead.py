@@ -59,4 +59,31 @@ class Lead:
                 lead.contacts.append(contact)
 
     def missing_state(lead):
-        return lead.custom_fields[Lead.FIELDS["company_us_state"]] not in [None,'']
+        return lead.custom_fields[Lead.FIELDS["company_us_state"]] in [None,'']
+    
+    def missing_revenue(lead):
+        return lead.custom_fields[Lead.FIELDS["company_revenue"]] in [None, '']
+    
+    def missing_state_or_revenue(lead):
+        if lead.missing_state() or lead.missing_revenue():
+            return True
+        else:
+            return False
+
+    def group_leads_by_state(leads):
+        state_data = {}
+        for lead in leads:
+            state = lead.custom_fields[Lead.FIELDS["company_us_state"]]
+            if state not in state_data and not lead.missing_state_or_revenue():
+                state_data[state] = {
+                'companies': [],
+                'revenues': []
+            }
+        # Skip over leads that have missing State or Revenue
+            if not lead.missing_state_or_revenue():
+                state_data[state]['companies'].append(lead.name)
+                try:
+                    state_data[state]['revenues'].append(float(lead.custom_fields[Lead.FIELDS["company_revenue"]][1:].replace(',', '')))
+                except Exception as e:
+                    print(f"{lead}: Revenue could not be converted to float because {str(e)}")
+        return state_data

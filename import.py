@@ -1,13 +1,26 @@
 import csv
-import statistics
 from closeio_api import Client
+import argparse
+from datetime import datetime
 from lead import Lead
 from contact import Contact
+import statistics
 
 # Load environment variables
 from dotenv import load_dotenv
 import os
 load_dotenv('vault.env')
+
+### Setting up date range args to import data within specified range. ### 
+parser = argparse.ArgumentParser()
+# Example of specifying date range when running script: python import.py --start_date 01.01.1950 --end_date 31.01.2023
+parser.add_argument("--start_date", help="start date in format DD.MM.YYYY", required=True)
+parser.add_argument("--end_date", help="end date in format DD.MM.YYYY", required=True)
+
+args = parser.parse_args()
+
+start_date = datetime.strptime(args.start_date, "%d.%m.%Y")
+end_date = datetime.strptime(args.end_date, "%d.%m.%Y")
 
 #### Start to process source CSV file ####
 # Source CSV file name
@@ -22,7 +35,11 @@ with open(source_file, 'r') as csvfile:
     errors = []
 
     for row in csvreader:
-        # Initializing leads and contacts before importing data is validated and grouped together.
+        # First check if Company founded date falls within date range that was specified and skip CSV row if its out of range.
+        if row["custom.Company Founded"] in [None, ''] or (datetime.strptime(row["custom.Company Founded"], "%d.%m.%Y") < start_date or datetime.strptime(row["custom.Company Founded"], "%d.%m.%Y") > end_date):
+            # print(f"{row['Company']} and founded on {row['custom.Company Founded']}")
+            continue
+        # Creating leads and contacts before importing data is validated and grouped together.
         lead = Lead(row["Company"], {
             Lead.FIELDS["company_founded"] : row["custom.Company Founded"],
             Lead.FIELDS["company_revenue"] : row["custom.Company Revenue"],
@@ -30,53 +47,37 @@ with open(source_file, 'r') as csvfile:
         })
         contact = Contact(row["Contact Name"], row["Contact Emails"], row["Contact Phones"], row)
         
-        # Groups Leads and Contacts together if contact data is valid.
+        # Groups Leads and associated Contacts together if contact data is valid.
         if contact.validate_contact_data() == True:
             lead.add_or_update_lead(row, leads)
             lead.add_contact(contact, leads, row)
         else:
+        # If contact data is invalid it is tracked in the 'errors' list 
             if not lead.lead_exists(errors, row["Company"]):
                 errors.append(lead)
             print(f"invalid contact! {contact.to_dict()}")
 
-# Removing Leads grouped with Contacts that have invalid data.
+####  Removing Leads grouped with Contacts that have invalid data. ### 
 for error in errors:
     for lead in leads:
         if lead.name == error.name:
             leads.remove(lead)
 
-
-# Importing Leads grouped with Contacts provided the associated contact in a group didn't have errors.
+###  Importing Leads grouped with Contacts provided the associated contact in a group didn't have errors. ### 
 # Set API Key
 api_key = os.getenv("CLOSE_API_KEY")
 api = Client(api_key)
 
 for lead in leads:
-    print("")
     try:
         response = api.post('lead', data=lead.to_dict())
         print(response)
     except Exception as e:
         print(f"{lead}: Lead could not be posted because {str(e)}")
 
-### Generating CVS with State Revenue report
+### Generating CVS with State Revenue report ### 
 # Group the Leads by US State
-state_data = {}
-for lead in leads:
-    state = lead.custom_fields[Lead.FIELDS["company_us_state"]]
-    if state not in state_data and lead.missing_state():
-        state_data[state] = {
-            'companies': [],
-            'revenues': []
-        }
-	
-    # Skip over leads that have missing State
-    if lead.missing_state():
-        state_data[state]['companies'].append(lead.name)
-        try:
-            state_data[state]['revenues'].append(float(lead.custom_fields[Lead.FIELDS["company_revenue"]][1:].replace(',', '')))
-        except Exception as e:
-            print(f"{lead}: Revenue could not be converted to float because {str(e)}")
+state_data = Lead.group_leads_by_state(leads)
 
 def max_revenue(data):
     max_revenue = max(data['revenues'])
@@ -99,5 +100,8 @@ with open('State Revenue Report.csv', 'w', newline='') as output_file:
 	    	'Company with Most Revenue': max_company
         })
 
+
+for lead in leads:
+    print(lead.to_dict())
 count = len(leads)
-print(f"Job Done!! total leads: {count}")
+print(f"Job Done!! total leads imported: {count}")
