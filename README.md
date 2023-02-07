@@ -2,10 +2,10 @@
 
 Python Version: 3.8.5
 Dependencies needed: 
-closeio_api
+**closeio_api
 argparse
 datetime
-statistics
+statistics**
 
 ```python
 # How run the script:
