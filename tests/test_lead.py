@@ -1,6 +1,5 @@
 import unittest
 from closeio_api import Client
-# from unittest.mock import MagicMock, mock_open, patch
 import sys
 import io
 sys.path.append('.')
