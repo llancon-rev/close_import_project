@@ -56,6 +56,22 @@ class Lead:
             if lead.name == row["Company"]:
                 lead.contacts.append(contact)
 
+    def post_leads(leads, api, errors):
+        for lead in leads:
+            try:
+                response = api.post('lead', data=lead.to_dict())
+                print(f"API response: {response}")
+            except Exception as e:
+                errors.append(lead)
+                print(f"{lead.name} Lead could not be posted because: {str(e)}")
+        Lead.remove_leads_with_errors(leads, errors)
+
+    def remove_leads_with_errors(leads, errors):
+        for error in errors:
+            for lead in leads:
+                if lead.name == error.name:
+                    leads.remove(lead)
+
     def missing_state(lead):
         return lead.custom_fields[Lead.FIELDS["company_us_state"]] in [None,'']
     
