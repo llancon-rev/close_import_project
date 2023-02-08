@@ -58,22 +58,14 @@ with open(source_file, 'r') as csvfile:
             print(f"invalid contact! {contact.to_dict()}")
 
 ####  Removing Leads grouped with Contacts that have invalid data. ### 
-for error in errors:
-    for lead in leads:
-        if lead.name == error.name:
-            leads.remove(lead)
+Lead.remove_leads_with_errors(leads, errors)
 
 ###  Importing Leads grouped with Contacts provided the associated contact in a group didn't have errors. ### 
 # Set API Key
 api_key = os.getenv("CLOSE_API_KEY")
 api = Client(api_key)
 
-for lead in leads:
-    try:
-        response = api.post('lead', data=lead.to_dict())
-        print(response)
-    except Exception as e:
-        print(f"{lead}: Lead could not be posted because {str(e)}")
+Lead.post_leads(leads, api, errors)
 
 ### Generating CSV with State Revenue report ### 
 # Group the Leads by US State
@@ -101,7 +93,8 @@ with open('State Revenue Report.csv', 'w', newline='') as output_file:
         })
 
 
-for lead in leads:
-    print(lead.to_dict())
-count = len(leads)
-print(f"Job Done!! total leads imported: {count}")
+# for lead in leads:
+#     print(lead.to_dict())
+lead_count = len(leads)
+error_count = len(errors)
+print(f"Job Done!! total leads imported: {lead_count} errors: {error_count}")
