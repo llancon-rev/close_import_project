@@ -3,7 +3,7 @@ Python Version: 3.8.5
 
 ## Set up 🔌:
 1. It assumes the source CSV file is in the root directory and is called "Close Sample Import File.csv"
-2. Store the API Key in a file called ".vault" and place API Key in this format:
+2. Store the API Key in a file called "vault.env" and place API Key in this format:
 ```
 CLOSE_API_KEY=API key goes here
 ```
